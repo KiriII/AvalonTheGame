@@ -13,7 +13,7 @@ def generate_markup():
     :return: Объект кастомной клавиатуры
     """
     markup = telebot.types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
-    # Создаем лист (массив) и записываем в него все элементы
+    # Создаем лист (массив) и записываем в него все элементыpip list
     list_items = ["1", "2", "3"]
     # Заполняем разметку перемешанными элементами
     for item in list_items:
