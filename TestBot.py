@@ -67,7 +67,7 @@ def get_text_messages(message):
             bot.send_message(message.chat.id, text)
             current_states.self = States.NO_GAME
     elif message.text == "/state":
-        bot.send_message(message.chat.id, current_states.self)
+        bot.send_message(message.chat.id, "state " + current_states.self)
 
 if __name__ == '__main__':
     bot.polling(none_stop=True, interval=0)
