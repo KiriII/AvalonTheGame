@@ -31,9 +31,12 @@ def get_text_messages(message):
         bot.send_message(message.chat.id, "Можешь пока глянуть вот это", reply_markup=keyboard)
     elif message.text == "/hello":
         bot.send_message(message.chat.id, "Привет. Тут пока идёт стройка. Возвращайся позже!")
-    elif message.text == "/game":
-        markup = generate_markup()
-        bot.send_message(message.chat.id, 'game', reply_markup=markup)
+    elif message.text == "/create":
+        if (message.chat.id == 446193106):
+            bot.send_message(message.chat.id, 'Используйте эту команду в групповом чате')
+        else:
+            #markup = generate_markup()
+            bot.send_message(message.chat.id, 'Начат сбор игроков')
     else:
         bot.send_message(message.chat.id, message.chat.id)
 
