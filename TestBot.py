@@ -34,8 +34,8 @@ def get_text_messages(message):
     elif message.text == "/game":
         markup = generate_markup()
         bot.send_message(message.chat.id, 'game', reply_markup=markup)
-    #else:
-        #bot.send_message(message.chat.id, "спам")
+    else:
+        bot.send_message(message.chat.id, message.chat.id)
 
 @bot.message_handler(func=lambda message: True, content_types=['text'])
 def check_answer(message):
