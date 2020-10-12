@@ -21,6 +21,23 @@ def generate_markup():
     return markup
 
 
+@bot.message_handler(content_types=['text'])
+def get_text_messages(message):
+    if message.text == "/help":
+        keyboard = telebot.types.InlineKeyboardMarkup()
+        url_button = telebot.types.InlineKeyboardButton(text="Отзыв о настольной версии игры",
+                                                        url="https://www.nastolki-na-polke.ru/obzory/resistance-avalon/")
+        keyboard.add(url_button)
+        bot.send_message(message.chat.id, "Можешь пока глянуть вот это", reply_markup=keyboard)
+    elif message.text == "/hello":
+        bot.send_message(message.chat.id, "Привет. Тут пока идёт стройка. Возвращайся позже!")
+    elif message.text == "/game":
+        markup = generate_markup()
+        bot.send_message(message.chat.id, 'Угадай число', reply_markup=markup)
+        check_answer()
+    else:
+        bot.send_message(message.chat.id, "спам")
+
 @bot.message_handler(func=lambda message: True, content_types=['text'])
 def check_answer(message):
     # Если функция возвращает None -> Человек не в игре
@@ -38,23 +55,6 @@ def check_answer(message):
         else:
             bot.send_message(message.chat.id, 'Увы, Вы не угадали. Попробуйте ещё раз! Ответ: ' + answer,
                              reply_markup=keyboard_hider)
-
-
-@bot.message_handler(content_types=['text'])
-def get_text_messages(message):
-    if message.text == "/help":
-        keyboard = telebot.types.InlineKeyboardMarkup()
-        url_button = telebot.types.InlineKeyboardButton(text="Отзыв о настольной версии игры",
-                                                        url="https://www.nastolki-na-polke.ru/obzory/resistance-avalon/")
-        keyboard.add(url_button)
-        bot.send_message(message.chat.id, "Можешь пока глянуть вот это", reply_markup=keyboard)
-    elif message.text == "/hello":
-        bot.send_message(message.chat.id, "Привет. Тут пока идёт стройка. Возвращайся позже!")
-    elif message.text == "/game":
-        markup = generate_markup()
-        bot.send_message(message.chat.id, 'Угадай число', reply_markup=markup)
-    else:
-        bot.send_message(message.chat.id, "спам")
 
 
 if __name__ == '__main__':
