@@ -31,13 +31,13 @@ def generate_markup():
 
 @bot.message_handler(content_types=['text'])
 def get_text_messages(message):
-    if message.text == "/help" and message.chat.id == 446193106:
+    if message.text == "/help":
         keyboard = telebot.types.InlineKeyboardMarkup()
         url_button = telebot.types.InlineKeyboardButton(text="Отзыв о настольной версии игры",
                                                         url="https://www.nastolki-na-polke.ru/obzory/resistance-avalon/")
         keyboard.add(url_button)
         bot.send_message(message.chat.id, "Можешь пока глянуть вот это", reply_markup=keyboard)
-    elif message.text == "/hello" and message.chat.id == 446193106:
+    elif message.text == "/hello":
         bot.send_message(message.chat.id, "Привет. Тут пока идёт стройка. Возвращайся позже!")
     elif message.text == "/create":
 
