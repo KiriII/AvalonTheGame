@@ -74,7 +74,7 @@ def get_text_messages(message):
             bot.send_message(message.chat.id, text)
             set_state(States.NO_GAME)
     elif message.text == "/state":
-        bot.send_message(message.chat.id, "state " + str(get_state().name))
+        bot.send_message(message.chat.id, "state " + str(get_state().name) + " " + message.chat.id + " " + bot.get_chat())
 
 if __name__ == '__main__':
     bot.polling(none_stop=True, interval=0)
