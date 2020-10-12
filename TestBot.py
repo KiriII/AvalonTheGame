@@ -40,13 +40,11 @@ def get_text_messages(message):
     elif message.text == "/hello" and message.chat.id == 446193106:
         bot.send_message(message.chat.id, "Привет. Тут пока идёт стройка. Возвращайся позже!")
     elif message.text == "/create":
-        if message.chat.id == 446193106:
-            bot.send_message(message.chat.id, 'Используйте эту команду в групповом чате')
-        else:
-            #markup = generate_markup()
-            bot.send_message(message.chat.id, 'Начат сбор игроков')
-            current_states.self = States.FIND_PLAYERS
-            players.append(message.from_user.username)
+
+        #markup = generate_markup()
+        bot.send_message(message.chat.id, 'Начат сбор игроков')
+        current_states.self = States.FIND_PLAYERS
+        players.append(message.from_user.username)
     elif message.text == "/join":
         if current_states.self == States.FIND_PLAYERS & message.from_user.username not in players:
             players.append(message.from_user.username)
@@ -68,9 +66,8 @@ def get_text_messages(message):
                 i += 1
             bot.send_message(message.chat.id, text)
             current_states.self = States.NO_GAME
-
-    #else:
-    #    bot.send_message(message.chat.id, message.chat.id)
+    elif message.text == "/state":
+        bot.send_message(message.chat.id, current_states.self)
 
 if __name__ == '__main__':
     bot.polling(none_stop=True, interval=0)
