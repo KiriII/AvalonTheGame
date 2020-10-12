@@ -1,9 +1,17 @@
 import random
-
+from enum import Enum
 import telebot
 
-bot = telebot.TeleBot('1285966353:AAEIQ7RYIqx9rcV0Fm6om5RZeRSKy70Xpgc')
+class States(Enum):
+    NO_GAME = "0"
+    FIND_PLAYERS = "1"
+    SET_MISSION_СOMPOSITION = "2"
+    SET_MISSION_RESULT = "3"
 
+bot = telebot.TeleBot('1285966353:AAEIQ7RYIqx9rcV0Fm6om5RZeRSKy70Xpgc')
+players = []
+boss = 0
+current_states = States.NO_GAME
 
 def generate_markup():
     """
@@ -23,41 +31,46 @@ def generate_markup():
 
 @bot.message_handler(content_types=['text'])
 def get_text_messages(message):
-    if message.text == "/help":
+    if message.text == "/help" and message.chat.id == 446193106:
         keyboard = telebot.types.InlineKeyboardMarkup()
         url_button = telebot.types.InlineKeyboardButton(text="Отзыв о настольной версии игры",
                                                         url="https://www.nastolki-na-polke.ru/obzory/resistance-avalon/")
         keyboard.add(url_button)
         bot.send_message(message.chat.id, "Можешь пока глянуть вот это", reply_markup=keyboard)
-    elif message.text == "/hello":
+    elif message.text == "/hello" and message.chat.id == 446193106:
         bot.send_message(message.chat.id, "Привет. Тут пока идёт стройка. Возвращайся позже!")
     elif message.text == "/create":
-        if (message.chat.id == 446193106):
+        if message.chat.id == 446193106:
             bot.send_message(message.chat.id, 'Используйте эту команду в групповом чате')
         else:
             #markup = generate_markup()
             bot.send_message(message.chat.id, 'Начат сбор игроков')
+            current_states.self = States.FIND_PLAYERS
+            players.append(message.from_user.username)
+    elif message.text == "/join":
+        if current_states.self == States.FIND_PLAYERS & message.from_user.username not in players:
+            players.append(message.from_user.username)
+            bot.send_message(message.chat.id, 'Игрок ' + message.from_user.username + ' добавлен к игре')
+    elif message.text == "/showPlayers":
+        if current_states.self == States.FIND_PLAYERS:
+            text = ""
+            i = 1
+            for j in players :
+                text += i + ". " + j + "\n"
+                i += 1
+            bot.send_message(message.chat.id, text)
+    elif message.text == "/startGame":
+        if current_states.self == States.FIND_PLAYERS and message.from_user.username == players[0]:
+            text = ""
+            i = 1
+            for j in players:
+                text += i + ". " + j + "\n"
+                i += 1
+            bot.send_message(message.chat.id, text)
+            current_states.self = States.NO_GAME
+
     #else:
     #    bot.send_message(message.chat.id, message.chat.id)
-
-@bot.message_handler(func=lambda message: True, content_types=['text'])
-def check_answer(message):
-    ## Если функция возвращает None -> Человек не в игре
-    answer = str(random.randint(1, 3))
-    ## Как Вы помните, answer может быть либо текст, либо None
-    ## Если None:
-    #if not answer:
-    #    bot.send_message(message.chat.id, 'Чтобы начать игру, выберите команду /game')
-    #else:
-    #    # Уберем клавиатуру с вариантами ответа.
-    #    keyboard_hider = telebot.types.ReplyKeyboardRemove()
-    #    # Если ответ правильный/неправильный
-    #    if message.text == answer:
-    #        bot.send_message(message.chat.id, 'Верно!', reply_markup=keyboard_hider)
-    #    else:
-    #        bot.send_message(message.chat.id, 'Увы, Вы не угадали. Попробуйте ещё раз! Ответ: ' + answer,
-    #                         reply_markup=keyboard_hider)
-
 
 if __name__ == '__main__':
     bot.polling(none_stop=True, interval=0)
