@@ -37,26 +37,28 @@ def generate_markup():
 
 @bot.message_handler(content_types=['text'])
 def get_text_messages(message):
-    if message.text == "/help":
+    if message.text == "/help" and message.chat.id == 446193106:
         keyboard = telebot.types.InlineKeyboardMarkup()
         url_button = telebot.types.InlineKeyboardButton(text="Отзыв о настольной версии игры",
                                                         url="https://www.nastolki-na-polke.ru/obzory/resistance-avalon/")
         keyboard.add(url_button)
         bot.send_message(message.chat.id, "Можешь пока глянуть вот это", reply_markup=keyboard)
-    elif message.text == "/hello":
+    elif message.text == "/hello" and message.chat.id == 446193106:
         bot.send_message(message.chat.id, "Привет. Тут пока идёт стройка. Возвращайся позже!")
     elif message.text == "/create":
-
-        #markup = generate_markup()
-        bot.send_message(message.chat.id, 'Начат сбор игроков')
-        set_state(States.FIND_PLAYERS)
-        players.append(message.from_user.username)
+        if message.chat.id == 446193106:
+            bot.send_message(message.chat.id, 'Используй эту команду в групповом чате')
+        else :
+            #markup = generate_markup()
+            bot.send_message(message.chat.id, 'Начат сбор игроков')
+            set_state(States.FIND_PLAYERS)
+            players.append(message.from_user.username)
     elif message.text == "/join":
         if get_state() == States.FIND_PLAYERS & message.from_user.username not in players:
             players.append(message.from_user.username)
             bot.send_message(message.chat.id, 'Игрок ' + message.from_user.username + ' добавлен к игре')
     elif message.text == "/showPlayers":
-        if get_state() == States.FIND_PLAYERS:
+        if get_state() == States.FIND_PLAYERS and message.from_user.username == "kirisya228":
             text = ""
             i = 1
             if len(players) != 0:
@@ -73,8 +75,8 @@ def get_text_messages(message):
                 i += 1
             bot.send_message(message.chat.id, text)
             set_state(States.NO_GAME)
-    elif message.text == "/state":
-        bot.send_message(message.chat.id, "state " + str(get_state().name) + " " + str(message.chat.id) )
+    elif message.text == "/state" and message.from_user.username == "kirisya228":
+        bot.send_message(message.chat.id, "state " + str(get_state().name))
 
 if __name__ == '__main__':
     bot.polling(none_stop=True, interval=0)
