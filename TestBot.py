@@ -52,7 +52,7 @@ def get_text_messages(message):
         bot.send_message(message.chat.id, "Привет. Тут пока идёт стройка. Возвращайся позже!")
     elif message.text == "/game":
         markup = generate_markup()
-        bot.send_message(message.chat.id, 'Угадай число от 1 до 3', reply_markup=markup)
+        bot.send_message(message.chat.id, 'Угадай число', reply_markup=markup)
     else:
         bot.send_message(message.chat.id, "спам")
 
