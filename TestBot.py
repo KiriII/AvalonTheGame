@@ -37,8 +37,8 @@ def get_text_messages(message):
         else:
             #markup = generate_markup()
             bot.send_message(message.chat.id, 'Начат сбор игроков')
-    else:
-        bot.send_message(message.chat.id, message.chat.id)
+    #else:
+    #    bot.send_message(message.chat.id, message.chat.id)
 
 @bot.message_handler(func=lambda message: True, content_types=['text'])
 def check_answer(message):
