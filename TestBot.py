@@ -21,13 +21,6 @@ def generate_markup():
     return markup
 
 
-@bot.message_handler(commands=['game'])
-def game(message):
-    # Формируем разметку
-    markup = generate_markup()
-    bot.send_message(message.chat.id, 'Угадай число от 1 до 3', reply_markup=markup)
-
-
 @bot.message_handler(func=lambda message: True, content_types=['text'])
 def check_answer(message):
     # Если функция возвращает None -> Человек не в игре
@@ -57,6 +50,9 @@ def get_text_messages(message):
         bot.send_message(message.chat.id, "Можешь пока глянуть вот это", reply_markup=keyboard)
     elif message.text == "/hello":
         bot.send_message(message.chat.id, "Привет. Тут пока идёт стройка. Возвращайся позже!")
+    elif message.text == "/game":
+        markup = generate_markup()
+        bot.send_message(message.chat.id, 'Угадай число от 1 до 3', reply_markup=markup)
     else:
         bot.send_message(message.chat.id, "спам")
 
