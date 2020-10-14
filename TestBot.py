@@ -14,7 +14,7 @@ class States(Enum):
     VOTE_MISSION_СOMPOSITION = "3"
     VOTE_MISSION_RESULT = "4"
 
-WEBHOOK_HOST = 'https://dashboard.heroku.com/apps/avalon-bot-trpo'
+WEBHOOK_HOST = 'https://avalon-bot-trpo.herokuapp.com/'
 WEBHOOK_PORT = 8443  # 443, 80, 88 or 8443 (port need to be 'open')
 WEBHOOK_LISTEN = '0.0.0.0'  # In some VPS you may need to put here the IP addr
 bot = telebot.TeleBot('1285966353:AAEIQ7RYIqx9rcV0Fm6om5RZeRSKy70Xpgc')
@@ -125,7 +125,6 @@ def get_text_messages(message):
 def get_callback_btn(callback_query: telebot.types.CallbackQuery):
     if get_state() == States.SET_MISSION_СOMPOSITION :
         if callback_query.from_user.username == boss[0] :
-            code = callback_query.inline_message_id
             username = callback_query.data[3:]
             bot.answer_callback_query(callback_query.id, str(username) + " добавлен к команде миссии")
             mission_composition.append(username)
