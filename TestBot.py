@@ -5,7 +5,6 @@ import random
 import os
 import logging
 from flask import Flask, request
-from http.server import BaseHTTPRequestHandler, HTTPServer
 
 
 class States(Enum):
