@@ -2,6 +2,11 @@ import random
 from enum import Enum
 import telebot
 import random
+import os
+import logging
+from flask import Flask, request
+from http.server import BaseHTTPRequestHandler, HTTPServer
+
 
 class States(Enum):
     NO_GAME = "0"
@@ -10,6 +15,9 @@ class States(Enum):
     VOTE_MISSION_СOMPOSITION = "3"
     VOTE_MISSION_RESULT = "4"
 
+WEBHOOK_HOST = 'https://dashboard.heroku.com/apps/avalon-bot-trpo'
+WEBHOOK_PORT = 8443  # 443, 80, 88 or 8443 (port need to be 'open')
+WEBHOOK_LISTEN = '0.0.0.0'  # In some VPS you may need to put here the IP addr
 bot = telebot.TeleBot('1285966353:AAEIQ7RYIqx9rcV0Fm6om5RZeRSKy70Xpgc')
 players = []
 boss = []
@@ -135,5 +143,32 @@ def get_text_messages(message):
             bot.send_message(message.chat.id, "Игра оконченна")
 
 
-if __name__ == '__main__':
-    bot.polling(none_stop=True, interval=0)
+#if __name__ == '__main__':
+if "HEROKU" in list(os.environ.keys()):
+    logger = telebot.logger
+    telebot.logger.setLevel(logging.INFO)
+
+    server = Flask(__name__)
+
+
+    @server.route("/bot", methods=['POST'])
+    def getMessage():
+        bot.process_new_updates([telebot.types.Update.de_json(request.stream.read().decode("utf-8"))])
+        return "!", 200
+
+
+    @server.route("/")
+    def webhook():
+        bot.remove_webhook()
+        bot.set_webhook(
+            url=WEBHOOK_HOST)  # этот url нужно заменить на url вашего Хероку приложения
+        return "?", 200
+
+
+    server.run(host=WEBHOOK_LISTEN, port=os.environ.get('PORT', 80))
+else:
+    # если переменной окружения HEROKU нету, значит это запуск с машины разработчика.
+    # Удаляем вебхук на всякий случай, и запускаем с обычным поллингом.
+    bot.remove_webhook()
+    bot.polling(none_stop=True)
+#bot.polling(none_stop=True, interval=0)
