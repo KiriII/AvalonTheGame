@@ -83,7 +83,7 @@ def get_text_messages(message):
 @bot.message_handler(commands=['help'])
 def get_text_messages(message):
     if message.text == "/help":
-        bot.send_message(message.chat.id, text="Команды:\n"
+        bot.reply_to(message.chat.id, text="Команды:\n"
                                                              "/create для начала сбора игроков\n"
                                                              "/join для вступления в группу игроков\n"
                                                              "/startGame для начала игры\n"
