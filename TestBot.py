@@ -15,7 +15,7 @@ class States(Enum):
     VOTE_MISSION_RESULT = "4"
 
 WEBHOOK_HOST = 'https://avalon-bot-trpo.herokuapp.com/'
-WEBHOOK_PORT = 8443  # 443, 80, 88 or 8443 (port need to be 'open')
+WEBHOOK_PORT = 80  # 443, 80, 88 or 8443 (port need to be 'open')
 WEBHOOK_LISTEN = '0.0.0.0'  # In some VPS you may need to put here the IP addr
 bot = telebot.TeleBot('1285966353:AAEIQ7RYIqx9rcV0Fm6om5RZeRSKy70Xpgc')
 players = []
