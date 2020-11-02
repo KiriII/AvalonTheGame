@@ -21,6 +21,7 @@ bot = telebot.TeleBot('1285966353:AAEIQ7RYIqx9rcV0Fm6om5RZeRSKy70Xpgc')
 players = []
 boss = []
 mission_composition = []
+votes = []
 current_states = [States.NO_GAME]
 
 def get_state():
@@ -29,24 +30,21 @@ def get_state():
 def set_state(state):
     current_states[0] = state
 
-def generate_markup():
-    """
-    Создаем кастомную клавиатуру для выбора ответа
-    :param right_answer: Правильный ответ
-    :param wrong_answers: Набор неправильных ответов
-    :return: Объект кастомной клавиатуры
-    """
+def generate_markup(a):
     markup = telebot.types.InlineKeyboardMarkup()
-    #markup = telebot.types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
-    # Создаем лист (массив) и записываем в него все элементыpip list
-    # Заполняем разметку перемешанными элементами
-    i = 1
-    for item in players:
-        if item != boss[0] and item not in mission_composition:
-            callback = "btn" + str(i)
-            markup.add(telebot.types.InlineKeyboardButton(str(item), callback_data="btn" + str(item)))
-        i += 1
-    return markup
+    if a == 1:
+        i = 1
+        for item in players:
+            if item != boss[0] and item not in mission_composition:
+                callback = "btn" + str(i)
+                markup.add(telebot.types.InlineKeyboardButton(str(item), callback_data="btn" + str(item)))
+            i += 1
+        return markup
+    elif a == 2:
+        votes = [0,0]
+        markup.add(telebot.types.InlineKeyboardButton("Согласен(" + str(votes[0]) + ")", callback_data="vote0"))
+        markup.add(telebot.types.InlineKeyboardButton("Не согласен(" + str(votes[1]) + ")", callback_data="vote1"))
+
 
 @bot.message_handler(commands=['players'])
 def get_text_messages(message):
@@ -89,7 +87,8 @@ def get_text_messages(message):
                                                              "/startGame для начала игры\n"
                                                              "/players для показа игрков в игре\n"
                                                              "/team для показа текущей команды для миссии\n"
-                                                             "/state для показа текущего состояния")
+                                                             "/state для показа текущего состояния\n"
+                                                             "/teamup")
 
 @bot.message_handler(commands=['create'])
 def get_text_messages(message):
@@ -119,16 +118,19 @@ def get_text_messages(message):
             bot.send_message(message.chat.id, text)
             set_state(States.SET_MISSION_СOMPOSITION)
             boss.append(random.choice(players))
-            bot.send_message(message.chat.id, "Босс @" + str(boss[0]) + " выбирай состав миссии", reply_markup=generate_markup())
+            bot.send_message(message.chat.id, "Босс @" + str(boss[0]) + " выбирай состав миссии", reply_markup=generate_markup(1))
 
-@bot.callback_query_handler(func=lambda message:message.data)
-def get_callback_btn(callback_query: telebot.types.CallbackQuery):
-    if get_state() == States.SET_MISSION_СOMPOSITION :
-        if callback_query.from_user.username == boss[0] :
-            username = callback_query.data[3:]
-            bot.answer_callback_query(callback_query.id, str(username) + " добавлен к команде миссии")
-            mission_composition.append(username)
-
+@bot.message_handler(commands=['teamup'])
+def get_text_messages(message):
+    if get_state() == States.SET_MISSION_СOMPOSITION:
+        if message.from_user.username == boss[0]:
+            set_state(States.VOTE_MISSION_СOMPOSITION)
+            text = ""
+            i = 1
+            for j in mission_composition:
+                text += str(i) + ". @" + str(j) + "\n"
+                i += 1
+            bot.send_message(message.chat.id, "Команда: " + text + "\nСогласны с составом команды?", reply_markup=generate_markup(2))
 
 @bot.message_handler(content_types=['text'])
 def get_text_messages(message):
@@ -140,6 +142,25 @@ def get_text_messages(message):
             set_state(States.NO_GAME)
             bot.send_message(message.chat.id, "Игра оконченна")
 
+@bot.callback_query_handler(func=lambda message:'btn' in message)
+def get_callback_btn(callback_query: telebot.types.CallbackQuery):
+    if get_state() == States.SET_MISSION_СOMPOSITION:
+        if callback_query.from_user.username == boss[0]:
+            username = callback_query.data[3:]
+            if username not in mission_composition:
+                bot.answer_callback_query(callback_query.id, str(username) + " добавлен к команде миссии")
+                mission_composition.append(username)
+
+@bot.callback_query_handler(func=lambda message:'vote' in message)
+def get_callback_btn(callback_query: telebot.types.CallbackQuery):
+    if get_state() == States.VOTE_MISSION_СOMPOSITION:
+        if callback_query.from_user.username in players:
+            vote = callback_query.data[4]
+            if vote == '0':
+                votes[0] += 1
+            elif vote == '1':
+                votes[1] += 1
+            bot.edit_message_reply_markup(callback_query.from_user.id, callback_query.message.message_id, reply_markup=generate_markup(2))
 
 if __name__ == '__main__':
     if "HEROKU" in list(os.environ.keys()):
