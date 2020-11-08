@@ -21,8 +21,10 @@ bot = telebot.TeleBot('1285966353:AAEIQ7RYIqx9rcV0Fm6om5RZeRSKy70Xpgc')
 players = []
 boss = []
 mission_composition = []
-voted = []
+voted0 = []
+voted1 = []
 votes = [0,0]
+mission_result = []
 current_states = [States.NO_GAME]
 
 def get_state():
@@ -41,8 +43,14 @@ def generate_markup(a):
                 markup.add(telebot.types.InlineKeyboardButton(str(item), callback_data="btn" + str(item)))
             i += 1
     elif a == 2:
-        markup.add(telebot.types.InlineKeyboardButton("Согласен(" + str(votes[0]) + ")", callback_data="vote0"))
-        markup.add(telebot.types.InlineKeyboardButton("Не согласен(" + str(votes[1]) + ")", callback_data="vote1"))
+        if get_state() == States.VOTE_MISSION_СOMPOSITION:
+            button1 = "Согласен("
+            button2 = "Не согласен("
+        elif get_state() == States.VOTE_MISSION_RESULT:
+            button1 = "Успех!("
+            button2 = "Провал...("
+        markup.add(telebot.types.InlineKeyboardButton(button1 + str(votes[0]) + ")", callback_data="vote0"))
+        markup.add(telebot.types.InlineKeyboardButton(button2 + str(votes[1]) + ")", callback_data="vote1"))
     return markup
 
 
@@ -132,6 +140,78 @@ def get_text_messages(message):
                 i += 1
             bot.send_message(message.chat.id, "Команда:\n" + text + "Согласны с составом команды?", reply_markup=generate_markup(2))
 
+@bot.message_handler(commands=['stopVote'])
+def get_text_messages(message):
+    if get_state() == States.VOTE_MISSION_СOMPOSITION:
+        if votes[0] > votes[1]:
+            set_state(States.VOTE_MISSION_RESULT)
+            votes[0] = 0
+            votes[1] = 0
+            text = ""
+            i = 1
+            for j in mission_composition:
+                text += str(i) + ". @" + str(j) + "\n"
+                i += 1
+            bot.send_message(message.chat.id, "Команда:\n" + text + "Отправляется в приключение, где их ждёт...",
+                             reply_markup=generate_markup(2))
+        else:
+            set_state(States.SET_MISSION_СOMPOSITION)
+            mission_composition.clear()
+            voted0.clear()
+            voted1.clear()
+            j = 0
+            for i in players:
+                if i in boss:
+                    if j == len(players) - 1:
+                        boss[0] = players[0]
+                    else:
+                        boss[0] = players[j+1]
+                    votes[0] = 0
+                    votes[1] = 0
+                    bot.send_message(message.chat.id, "Босс меняется на следующего...")
+                    bot.send_message(message.chat.id, "Босс @" + str(boss[0]) + " выбирай состав миссии",
+                                     reply_markup=generate_markup(1))
+                    return
+                j += 1
+    elif get_state() == States.VOTE_MISSION_RESULT:
+        if votes[0] > votes[1]:
+            votes[0] = 0
+            votes[1] = 0
+            bot.send_message(message.chat.id, "Миссия прошла успешно")
+            mission_result.append("s")
+        else:
+            votes[0] = 0
+            votes[1] = 0
+            bot.send_message(message.chat.id, "Миссия провалена")
+            mission_result.append("f")
+        text = ""
+        j = 1
+        for i in mission_result:
+            if "s" in i:
+                text += "Миссия " + str(j) + " успешно пройденна!\n"
+            if "f" in i:
+                text += "Миссия " + str(j) + " провалена...\n"
+            j += 1
+        bot.send_message(message.chat.id, "Так так так...\n" + text)
+        set_state(States.SET_MISSION_СOMPOSITION)
+        mission_composition.clear()
+        voted0.clear()
+        voted1.clear()
+        j = 0
+        for i in players:
+            if i in boss:
+                if j == len(players) - 1:
+                    boss[0] = players[0]
+                else:
+                    boss[0] = players[j + 1]
+                votes[0] = 0
+                votes[1] = 0
+                bot.send_message(message.chat.id, "Босс меняется на следующего...")
+                bot.send_message(message.chat.id, "Босс @" + str(boss[0]) + " выбирай состав миссии",
+                                 reply_markup=generate_markup(1))
+                return
+            j += 1
+
 @bot.message_handler(content_types=['text'])
 def get_text_messages(message):
     if message.text == "/endGame":
@@ -141,6 +221,7 @@ def get_text_messages(message):
             mission_composition.clear()
             set_state(States.NO_GAME)
             bot.send_message(message.chat.id, "Игра оконченна")
+
 
 @bot.callback_query_handler(func=lambda message:'btn' in message.data)
 def get_callback_btn(callback_query: telebot.types.CallbackQuery):
@@ -153,15 +234,23 @@ def get_callback_btn(callback_query: telebot.types.CallbackQuery):
 
 @bot.callback_query_handler(func=lambda message:'vote' in message.data)
 def get_callback_btn(callback_query: telebot.types.CallbackQuery):
-    if get_state() == States.VOTE_MISSION_СOMPOSITION:
-        if callback_query.from_user.username in players and callback_query.from_user.username not in voted:
-            vote = callback_query.data[4]
-            if vote == '0':
+    if get_state() == States.VOTE_MISSION_СOMPOSITION and callback_query.from_user.username in players or get_state() == States.VOTE_MISSION_RESULT and callback_query.from_user.username in mission_composition:
+        vote = callback_query.data[4]
+        if vote == '0':
+            if callback_query.from_user.username in voted1 or callback_query.from_user.username not in voted0 and callback_query.from_user.username not in voted1:
                 votes[0] = votes[0] + 1
-            elif vote == '1':
+                voted0.append(callback_query.from_user.username)
+                if callback_query.from_user.username in voted1:
+                    votes[1] = votes[1] - 1
+                    voted1.remove(callback_query.from_user.username)
+        elif vote == '1':
+            if callback_query.from_user.username in voted0 or callback_query.from_user.username not in voted0 and callback_query.from_user.username not in voted1:
                 votes[1] = votes[1] + 1
-            voted.append(callback_query.from_user.username)
-            bot.edit_message_reply_markup(callback_query.message.chat.id, callback_query.message.message_id, reply_markup=generate_markup(2))
+                voted1.append(callback_query.from_user.username)
+                if callback_query.from_user.username in voted0:
+                    votes[0] = votes[0] - 1
+                    voted0.remove(callback_query.from_user.username)
+        bot.edit_message_reply_markup(callback_query.message.chat.id, callback_query.message.message_id, reply_markup=generate_markup(2))
 
 if __name__ == '__main__':
     if "HEROKU" in list(os.environ.keys()):
