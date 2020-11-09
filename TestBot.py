@@ -96,7 +96,8 @@ def get_text_messages(message):
                                                              "/players для показа игрков в игре\n"
                                                              "/team для показа текущей команды для миссии\n"
                                                              "/state для показа текущего состояния\n"
-                                                             "/teamup")
+                                                             "/teamup для перехода от сбора команды к голосованию за согласие с этим составом миссии\n"
+                                                             "/stopVote для окончания любого голосования и перехода к следующему этапу")
 
 @bot.message_handler(commands=['create'])
 def get_text_messages(message):
@@ -132,13 +133,16 @@ def get_text_messages(message):
 def get_text_messages(message):
     if get_state() == States.SET_MISSION_СOMPOSITION:
         if message.from_user.username == boss[0]:
-            set_state(States.VOTE_MISSION_СOMPOSITION)
-            text = ""
-            i = 1
-            for j in mission_composition:
-                text += str(i) + ". @" + str(j) + "\n"
-                i += 1
-            bot.send_message(message.chat.id, "Команда:\n" + text + "Согласны с составом команды?", reply_markup=generate_markup(2))
+            if len(mission_composition):
+                bot.send_message(message.chat.id, "В составе команды никого нет!")
+            else:
+                set_state(States.VOTE_MISSION_СOMPOSITION)
+                text = ""
+                i = 1
+                for j in mission_composition:
+                    text += str(i) + ". @" + str(j) + "\n"
+                    i += 1
+                bot.send_message(message.chat.id, "Команда:\n" + text + "Согласны с составом команды?", reply_markup=generate_markup(2))
 
 @bot.message_handler(commands=['stopVote'])
 def get_text_messages(message):
@@ -228,9 +232,23 @@ def get_callback_btn(callback_query: telebot.types.CallbackQuery):
     if get_state() == States.SET_MISSION_СOMPOSITION:
         if callback_query.from_user.username == boss[0]:
             username = callback_query.data[3:]
+            i = 1
+            text = "Команда сейчас:\n"
+            for j in mission_composition:
+                text += str(i) + ". @" + str(j) + "\n"
+                i += 1
+            if len(mission_composition) == 0:
+                text = "В команде никого нет!"
             if username not in mission_composition:
-                bot.answer_callback_query(callback_query.id, str(username) + " добавлен к команде миссии")
+                bot.answer_callback_query(callback_query.id, str(username) + " добавлен к команде миссии\n" + text)
                 mission_composition.append(username)
+            elif username in mission_composition:
+                mc = mission_composition
+                mission_composition.clear()
+                for i in mc:
+                    if i not in username:
+                        mission_composition.append(i)
+                bot.answer_callback_query(callback_query.id, str(username) + " убран из состава миссии\n" + text)
 
 @bot.callback_query_handler(func=lambda message:'vote' in message.data)
 def get_callback_btn(callback_query: telebot.types.CallbackQuery):
