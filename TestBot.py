@@ -2,6 +2,7 @@ import random
 from enum import Enum
 import telebot
 import random
+import time
 import os
 import logging
 from flask import Flask, request
@@ -38,32 +39,67 @@ def generate_markup(a):
     if a == 1:
         i = 1
         for item in players:
-            if item != boss[0] and item not in mission_composition:
+            if item != boss[0]:
                 callback = "btn" + str(i)
                 markup.add(telebot.types.InlineKeyboardButton(str(item), callback_data="btn" + str(item)))
             i += 1
     elif a == 2:
         if get_state() == States.VOTE_MISSION_СOMPOSITION:
-            button1 = "Согласен("
-            button2 = "Не согласен("
+            button1 = "Согласен"
+            button2 = "Не согласен"
         elif get_state() == States.VOTE_MISSION_RESULT:
-            button1 = "Успех!("
-            button2 = "Провал...("
-        markup.add(telebot.types.InlineKeyboardButton(button1 + str(votes[0]) + ")", callback_data="vote0"))
-        markup.add(telebot.types.InlineKeyboardButton(button2 + str(votes[1]) + ")", callback_data="vote1"))
+            button1 = "Успех!"
+            button2 = "Провал..."
+        markup.add(telebot.types.InlineKeyboardButton(button1, callback_data="vote0"))
+        markup.add(telebot.types.InlineKeyboardButton(button2, callback_data="vote1"))
     return markup
 
+def timer_message(message, text, markup):
+    k = 0
+    while k < 3:
+        if k == 0:
+            message1 = bot.send_message(message.chat.id, text, reply_markup=markup)
+        else:
+            bot.delete_message(message.chat.id, message1.message_id)
+            message1 = bot.send_message(message.chat.id, text, reply_markup=markup)
+        time.sleep(10)
+        k = k + 1
+
+def get_list(list, start_text):
+    text = start_text
+    i = 1
+    if len(list) != 0:
+        for j in list:
+            text += str(i) + ". @" + str(j) + "\n"
+            i += 1
+    return text
+
+def boss_vote(message, first_vote):
+    if first_vote:
+        bot.send_message(message.chat.id, get_list(players, "В игре учавствуют: \n"))
+    set_state(States.SET_MISSION_СOMPOSITION)
+    boss.append(players[0])  # random.choice(players))
+    timer_message(message, "Босс @" + str(boss[0]) + " выбирай состав миссии", generate_markup(1))
+    # ПРОВЕРКА НА КОЛИЧЕСТВО ЧЕЛОВЕК В КОМАНДЕ
+    if len(mission_composition) < len(players) / 2:
+        k = len(mission_composition)
+        while k < len(players) / 2:
+            randomPlayer = random.choice(players)
+            print(str(randomPlayer) + str(k))
+            print(str(mission_composition) + str(len(players)))
+            if (len(mission_composition) == 0 or randomPlayer not in mission_composition) and randomPlayer != boss[0]:
+                mission_composition.append(randomPlayer)
+                k += 1
+    if len(mission_composition) == 0:
+        bot.send_message(message.chat.id, "В составе команды никого нет!")
+    else:
+        set_state(States.VOTE_MISSION_СOMPOSITION)
+        timer_message(message, "Команда:\n" + get_list(mission_composition, "") + "Согласны с составом команды?", generate_markup(2))
 
 @bot.message_handler(commands=['players'])
 def get_text_messages(message):
     if get_state() != States.NO_GAME:
-        text = ""
-        i = 1
-        if len(players) != 0:
-            for j in players:
-                text += str(i) + ". @" + str(j) + "\n"
-                i += 1
-            bot.send_message(message.chat.id, text)
+            bot.send_message(message.chat.id, get_list(players, ""))
     elif get_state() == States.NO_GAME:
         bot.send_message(message.chat.id, "Игра не начата")
 
@@ -74,12 +110,8 @@ def get_text_messages(message):
 @bot.message_handler(commands=['team'])
 def get_text_messages(message):
     if get_state() == States.SET_MISSION_СOMPOSITION:
-        text = ""
-        i = 1
         if len(mission_composition) != 0:
-            for j in mission_composition:
-                text += str(i) + ". @" + str(j) + "\n"
-                i += 1
+            text = get_list(mission_composition, "")
         else:
             text = "Пустая команда для миссии"
         bot.send_message(message.chat.id, text)
@@ -93,11 +125,10 @@ def get_text_messages(message):
                                                              "/create для начала сбора игроков\n"
                                                              "/join для вступления в группу игроков\n"
                                                              "/startGame для начала игры\n"
-                                                             "/players для показа игрков в игре\n"
-                                                             "/team для показа текущей команды для миссии\n"
-                                                             "/state для показа текущего состояния\n"
-                                                             "/teamup для перехода от сбора команды к голосованию за согласие с этим составом миссии\n"
-                                                             "/stopVote для окончания любого голосования и перехода к следующему этапу")
+                                                             "/players для показа игрков в игре - debug\n"
+                                                             "/state для показа текущего состояния - debug\n"
+                                                             "/team для показа текущей команды - debug\n"
+                                                             "/stopVote для окончания любого голосования и перехода к следующему этапу - ??")
 
 @bot.message_handler(commands=['create'])
 def get_text_messages(message):
@@ -107,6 +138,7 @@ def get_text_messages(message):
         bot.send_message(message.chat.id, 'Начат сбор игроков')
         set_state(States.FIND_PLAYERS)
         players.append(message.from_user.username)
+
 
 @bot.message_handler(commands=['join'])
 def get_text_messages(message):
@@ -119,47 +151,20 @@ def get_text_messages(message):
 def get_text_messages(message):
     if message.chat.id != 446193106 and get_state() == States.FIND_PLAYERS:
         if message.from_user.username == players[0]:
-            text = ""
-            i = 1
-            for j in players:
-                text += str(i) + ". @" + str(j) + "\n"
-                i += 1
-            bot.send_message(message.chat.id, text)
-            set_state(States.SET_MISSION_СOMPOSITION)
-            boss.append(random.choice(players))
-            bot.send_message(message.chat.id, "Босс @" + str(boss[0]) + " выбирай состав миссии", reply_markup=generate_markup(1))
+            boss_vote(message, True)
 
-@bot.message_handler(commands=['teamup'])
-def get_text_messages(message):
-    if get_state() == States.SET_MISSION_СOMPOSITION:
-        if message.from_user.username == boss[0]:
-            if len(mission_composition):
-                bot.send_message(message.chat.id, "В составе команды никого нет!")
-            else:
-                set_state(States.VOTE_MISSION_СOMPOSITION)
-                text = ""
-                i = 1
-                for j in mission_composition:
-                    text += str(i) + ". @" + str(j) + "\n"
-                    i += 1
-                bot.send_message(message.chat.id, "Команда:\n" + text + "Согласны с составом команды?", reply_markup=generate_markup(2))
 
 @bot.message_handler(commands=['stopVote'])
 def get_text_messages(message):
     if get_state() == States.VOTE_MISSION_СOMPOSITION:
+        set_state(States.VOTE_MISSION_RESULT)
         if votes[0] > votes[1]:
-            set_state(States.VOTE_MISSION_RESULT)
             votes[0] = 0
             votes[1] = 0
-            text = ""
-            i = 1
-            for j in mission_composition:
-                text += str(i) + ". @" + str(j) + "\n"
-                i += 1
-            bot.send_message(message.chat.id, "Команда:\n" + text + "Отправляется в приключение, где их ждёт...",
-                             reply_markup=generate_markup(2))
+            timer_message(message, "Команда:\n" + get_list(mission_composition, "") + "Отправляется в приключение, где их ждёт...", generate_markup(2))
         else:
-            set_state(States.SET_MISSION_СOMPOSITION)
+            votes[0] = 0
+            votes[1] = 0
             mission_composition.clear()
             voted0.clear()
             voted1.clear()
@@ -173,11 +178,11 @@ def get_text_messages(message):
                     votes[0] = 0
                     votes[1] = 0
                     bot.send_message(message.chat.id, "Босс меняется на следующего...")
-                    bot.send_message(message.chat.id, "Босс @" + str(boss[0]) + " выбирай состав миссии",
-                                     reply_markup=generate_markup(1))
+                    boss_vote(message, False)
                     return
                 j += 1
     elif get_state() == States.VOTE_MISSION_RESULT:
+        #print(str(votes[0]) + str(votes[1]))
         if votes[0] > votes[1]:
             votes[0] = 0
             votes[1] = 0
@@ -211,9 +216,7 @@ def get_text_messages(message):
                 votes[0] = 0
                 votes[1] = 0
                 bot.send_message(message.chat.id, "Босс меняется на следующего...")
-                bot.send_message(message.chat.id, "Босс @" + str(boss[0]) + " выбирай состав миссии",
-                                 reply_markup=generate_markup(1))
-                return
+                boss_vote(message, False)
             j += 1
 
 @bot.message_handler(content_types=['text'])
@@ -234,20 +237,25 @@ def get_callback_btn(callback_query: telebot.types.CallbackQuery):
             username = callback_query.data[3:]
             i = 1
             text = "Команда сейчас:\n"
-            for j in mission_composition:
-                text += str(i) + ". @" + str(j) + "\n"
-                i += 1
-            if len(mission_composition) == 0:
-                text = "В команде никого нет!"
             if username not in mission_composition:
-                bot.answer_callback_query(callback_query.id, str(username) + " добавлен к команде миссии\n" + text)
                 mission_composition.append(username)
+                for j in mission_composition:
+                    text += str(i) + ". @" + str(j) + "\n"
+                    i += 1
+                if len(mission_composition) == 0:
+                    text += "В команде никого нет!"
+                bot.answer_callback_query(callback_query.id, str(username) + " добавлен к команде миссии\n" + text)
             elif username in mission_composition:
                 mc = mission_composition
                 mission_composition.clear()
                 for i in mc:
                     if i not in username:
                         mission_composition.append(i)
+                for j in mission_composition:
+                    text += str(i) + ". @" + str(j) + "\n"
+                    i += 1
+                if len(mission_composition) == 0:
+                    text += "В команде никого нет!"
                 bot.answer_callback_query(callback_query.id, str(username) + " убран из состава миссии\n" + text)
 
 @bot.callback_query_handler(func=lambda message:'vote' in message.data)
@@ -268,7 +276,8 @@ def get_callback_btn(callback_query: telebot.types.CallbackQuery):
                 if callback_query.from_user.username in voted0:
                     votes[0] = votes[0] - 1
                     voted0.remove(callback_query.from_user.username)
-        bot.edit_message_reply_markup(callback_query.message.chat.id, callback_query.message.message_id, reply_markup=generate_markup(2))
+        print("Golosa za: " + str(votes[0]) + " protiv: " + str(votes[1]) + " state: " + str(get_state()));
+        #bot.edit_message_reply_markup(callback_query.message.chat.id, callback_query.message.message_id, reply_markup=generate_markup(2))
 
 if __name__ == '__main__':
     if "HEROKU" in list(os.environ.keys()):
