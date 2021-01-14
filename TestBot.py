@@ -265,6 +265,8 @@ def check_full(chat_id):
                 votes[chat_ind] = [0, 0]
                 mission_result[chat_ind].clear()
                 current_states[chat_ind] = [States.NO_GAME]
+                virtuous_team[chat_id].clear()
+                evil_team.clear()
             else:
                 set_state(States.SET_MISSION_СOMPOSITION, chat_id)
                 mission_composition[chat_ind].clear()
@@ -521,6 +523,8 @@ def get_text_messages(message):
                 votes[chat_id] = [0, 0]
                 mission_result[chat_id].clear()
                 current_states[chat_id] = [States.NO_GAME]
+                virtuous_team[chat_id].clear()
+                evil_team.clear()
 
 
 
