@@ -118,40 +118,40 @@ def get_mission_len(chat_id):
         if len(mission_result[chat_id]) == 4:
             return 5
 
-def bot_vote(chat_id):
-    if chat_id in chats:
-        if get_state(chat_id) == States.SET_MISSION_СOMPOSITION:
-            if "bot" in boss[chats.index(chat_id)][0]:
-                not_boss = []
-                for item in players[chats.index(chat_id)]:
-                    if item != boss[chats.index(chat_id)][0]:
-                        not_boss.append(item)
-                mission_composition[chats.index(chat_id)] = sample(not_boss, get_mission_len(chats.index(chat_id)))
-                check_full(chat_id)
-                time.sleep(2)
-        elif get_state(chat_id) == States.VOTE_MISSION_СOMPOSITION:
-            for i in players[chats.index(chat_id)]:
-                if "bot" in i and i not in voted0[chats.index(chat_id)] and i not in voted1[chats.index(chat_id)]:
-                    print(i + " voted ")
-                    if random.choice([True, False]):
-                        votes[chats.index(chat_id)][0] = votes[chats.index(chat_id)][0] + 1
-                        voted0[chats.index(chat_id)].append(i)
-                    else:
-                        votes[chats.index(chat_id)][1] = votes[chats.index(chat_id)][1] + 1
-                        voted1[chats.index(chat_id)].append(i)
-                    time.sleep(2)
-                    check_full(chat_id)
-        elif get_state(chat_id) == States.VOTE_MISSION_RESULT:
-            for i in mission_composition[chats.index(chat_id)]:
-                if "bot" in i and i not in voted0[chats.index(chat_id)] and i not in voted1[chats.index(chat_id)]:
-                    if random.choice([True, False]):
-                        votes[chats.index(chat_id)][0] = votes[chats.index(chat_id)][0] + 1
-                        voted0[chats.index(chat_id)].append(i)
-                    else:
-                        votes[chats.index(chat_id)][1] = votes[chats.index(chat_id)][1] + 1
-                        voted1[chats.index(chat_id)].append(i)
-                    check_full(chat_id)
-                    time.sleep(2)
+#def bot_vote(chat_id):
+#    if chat_id in chats:
+#        if get_state(chat_id) == States.SET_MISSION_СOMPOSITION:
+#            if "bot" in boss[chats.index(chat_id)][0]:
+#                not_boss = []
+#                for item in players[chats.index(chat_id)]:
+#                    if item != boss[chats.index(chat_id)][0]:
+#                        not_boss.append(item)
+#                mission_composition[chats.index(chat_id)] = sample(not_boss, get_mission_len(chats.index(chat_id)))
+#                check_full(chat_id)
+#                time.sleep(2)
+#        elif get_state(chat_id) == States.VOTE_MISSION_СOMPOSITION:
+#            for i in players[chats.index(chat_id)]:
+#                if "bot" in i and i not in voted0[chats.index(chat_id)] and i not in voted1[chats.index(chat_id)]:
+#                    print(i + " voted ")
+#                    if random.choice([True, False]):
+#                        votes[chats.index(chat_id)][0] = votes[chats.index(chat_id)][0] + 1
+#                        voted0[chats.index(chat_id)].append(i)
+#                    else:
+#                        votes[chats.index(chat_id)][1] = votes[chats.index(chat_id)][1] + 1
+#                        voted1[chats.index(chat_id)].append(i)
+#                    time.sleep(2)
+#                    check_full(chat_id)
+#        elif get_state(chat_id) == States.VOTE_MISSION_RESULT:
+#            for i in mission_composition[chats.index(chat_id)]:
+#                if "bot" in i and i not in voted0[chats.index(chat_id)] and i not in voted1[chats.index(chat_id)]:
+#                    if random.choice([True, False]):
+#                        votes[chats.index(chat_id)][0] = votes[chats.index(chat_id)][0] + 1
+#                        voted0[chats.index(chat_id)].append(i)
+#                    else:
+#                        votes[chats.index(chat_id)][1] = votes[chats.index(chat_id)][1] + 1
+#                        voted1[chats.index(chat_id)].append(i)
+#                    check_full(chat_id)
+#                    time.sleep(2)
 
 def know_team_button(chat_id):
     if chat_id in chats:
@@ -194,7 +194,7 @@ def check_full(chat_id):
                 set_state(States.VOTE_MISSION_СOMPOSITION, chat_id)
                 bot.send_message(chat_id, "Команда:\n" + get_list(mission_composition[chat_ind], "") +
                                  "Согласны с составом команды?", reply_markup=generate_markup(2, chat_id))
-                bot_vote(chat_id)
+               #bot_vote(chat_id)
         elif get_state(chat_id) == States.VOTE_MISSION_СOMPOSITION and len(voted1[chats.index(chat_id)]) + len(voted0[chats.index(chat_id)]) == len(players[chats.index(chat_id)]):
             print("VOTE MISSION COMPOSITION " + str(voted0[chat_ind]) + str(voted1[chat_ind]) + str(len(voted1[chats.index(chat_id)]) + len(voted0[chats.index(chat_id)])) + str(len(players[chats.index(chat_id)])))
             if votes[chat_ind][0] > votes[chat_ind][1]:
@@ -206,7 +206,7 @@ def check_full(chat_id):
                 bot.send_message(chat_id, "Команда:\n" + get_list(mission_composition[chat_ind], "") +
                                  "Отправляется в приключение, где их ждёт...",
                                  reply_markup=generate_markup(2, chat_id))
-                bot_vote(chat_id)
+                #bot_vote(chat_id)
             else:
                 votes[chat_ind][0] = 0
                 votes[chat_ind][1] = 0
@@ -325,7 +325,7 @@ def boss_vote(chat_id, first_vote):
         set_state(States.SET_MISSION_СOMPOSITION, chat_id)
         bot.send_message(chat_id, "Босс @" + str(boss[chats.index(chat_id)][0]) + " выбирай состав миссии. В этой миссии должно быть " + str(get_mission_len(chats.index(chat_id))),
                          reply_markup=generate_markup(1, chat_id))
-        bot_vote(chat_id)
+        #bot_vote(chat_id)
         #print(str(get_state(chat_id)) + " " + str(boss[chats.index(chat_id)]))
         # ПРОВЕРКА НА КОЛИЧЕСТВО ЧЕЛОВЕК В КОМАНДЕ
         #if len(mission_composition[chat_id]) < len(players[chat_id]) / 2:
@@ -389,8 +389,7 @@ def get_text_messages(message):
 @bot.message_handler(commands=['help'])
 def get_text_messages(message):
     init_chat(message.chat.id)
-    if message.text == "/help":
-        bot.send_message(message.chat.id, text="Команды:\n"
+    bot.send_message(message.chat.id, text="Команды:\n"
                                                              "/create для начала сбора игроков\n"
                                                              "/join для вступления в группу игроков\n"
                                                              "/startGame для начала игры\n"
@@ -496,15 +495,15 @@ def get_text_messages(message):
         if get_state(chat_id) == States.SET_MISSION_СOMPOSITION:
             bot.send_message(chat_id, "Босс @" + str(boss[chats.index(chat_id)][0]) + " выбирай состав миссии. В этой миссии должно быть " + str(get_mission_len(chats.index(chat_id))),
                              reply_markup=generate_markup(1, message.chat.id))
-            bot_vote(chat_id)
+            #bot_vote(chat_id)
         elif get_state(chat_id) == States.VOTE_MISSION_СOMPOSITION:
             bot.send_message(chat_id, "Команда:\n" + get_list(mission_composition[chats.index(chat_id)], "") +
                           "Согласны с составом команды?", reply_markup=generate_markup(2, message.chat.id))
-            bot_vote(chat_id)
+            #bot_vote(chat_id)
         elif get_state(chat_id) == States.VOTE_MISSION_RESULT:
             bot.send_message(chat_id, "Команда:\n" + get_list(mission_composition[chats.index(chat_id)], "") +
                           "Отправляется в приключение, где их ждёт...", reply_markup=generate_markup(2, message.chat.id))
-            bot_vote(chat_id)
+            #bot_vote(chat_id)
 
 
 @bot.message_handler(content_types=['text'])
